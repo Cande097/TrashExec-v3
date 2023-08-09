@@ -1,7 +1,9 @@
 #include "fx.hpp"
 
-#include <Windows.h>
+#include <cstdint>
 #include <fstream>
+
+#include <Windows.h>
 
 namespace memory
 {
@@ -9,8 +11,9 @@ namespace memory
 
 	bool InitMemory()
 	{
-
-		if (const uint64_t gameModule = (uint64_t)GetModuleHandleA("citizen-resources-core.dll"); !gameModule)
+		const uint64_t gameModule = static_cast<uint64_t>(GetModuleHandleA("citizen-resources-core.dll")); 
+		
+		if (!gameModule)
 		{
 			MessageBoxA(0, "no module", 0, 0);
 
