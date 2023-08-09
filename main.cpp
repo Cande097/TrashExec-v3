@@ -9,18 +9,15 @@ namespace memory
 
 	bool InitMemory()
 	{
-		const uint64_t gameModule = (uint64_t)GetModuleHandleA("citizen-resources-core.dll");
 
-		if (!gameModule)
+		if (const uint64_t gameModule = (uint64_t)GetModuleHandleA("citizen-resources-core.dll"); !gameModule)
 		{
 			MessageBoxA(0, "no module", 0, 0);
 
 			return false;
 		}
 
-		g_allResources = (std::vector<fx::ResourceImpl*>*)(gameModule + 0xAE6C0);
-
-		if (!g_allResources)
+		if (g_allResources = (std::vector<fx::ResourceImpl*>*)(gameModule + 0xAE6C0); !g_allResources)
 		{
 			MessageBoxA(0, "no resource", 0, 0);
 
