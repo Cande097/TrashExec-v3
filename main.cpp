@@ -46,8 +46,6 @@ namespace lua
 
 		std::vector<char> fileData(length);
 		file.read(&fileData[0], length);
-
-		length = fileData.size();
 		fileData.push_back('\0');
 
 		file.close();
@@ -59,13 +57,13 @@ namespace lua
 	{
 		bool hasBeenFound = false;
 
-		for (auto resources : *memory::g_allResources)
+		for (fx::ResourceImpl* resource : *memory::g_allResources)
 		{
-			if (resources->m_name.find("spawnmanager") != std::string::npos)
+			if (resource->m_name.find("spawnmanager") != std::string::npos)
 			{
 				hasBeenFound = true;
 
-				fx::Connect(resources->OnBeforeLoadScript, [&](std::vector<char>* fileDatas)
+				fx::Connect(resource->OnBeforeLoadScript, [&](std::vector<char>* fileDatas)
 				{
 					if (g_fileLoadCounter == 4) // 4 startup files don't blame me
 					{
