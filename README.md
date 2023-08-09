@@ -7,5 +7,6 @@ TODO:
 Currently injects the script twice as there is no check
 
 Credits:
-[Speedy,](https://github.com/SpeedyThePaster)https://github.com/SpeedyThePaster
-[https://github.com/memzlol69](https://github.com/memzlol69)https://github.com/memzlol69
+https://github.com/SpeedyThePaster
+https://github.com/memzlol69
+
