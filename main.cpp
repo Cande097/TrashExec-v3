@@ -1,7 +1,7 @@
+#include "fx.hpp"
+
 #include <Windows.h>
 #include <fstream>
-
-#include "fx.hpp"
 
 namespace memory
 {
