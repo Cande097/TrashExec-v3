@@ -59,29 +59,28 @@ namespace lua
 
 		for (fx::ResourceImpl* resource : *memory::g_allResources)
 		{
-			if (resource->m_name.find("spawnmanager") != std::string::npos)
+			if (resource->m_name.find("spawnmanager") == std::string::npos)
 			{
-				hasBeenFound = true;
-
-				fx::Connect(resource->OnBeforeLoadScript, [&](std::vector<char>* fileDatas)
-				{
-					if (g_fileLoadCounter == 4) // 4 startup files don't blame me
-					{
-						if (!g_hasBeenExecuted)
-						{
-							std::string buffer = LoadSystemFile(g_filePath);
-
-							fileDatas->push_back('\n');
-
-							fileDatas->insert(fileDatas->end(), buffer.begin(), buffer.end()); // Add the string
-
-							g_hasBeenExecuted = true;
-						}
-					}
-
-					g_fileLoadCounter++;
-				});
+				continue;
 			}
+
+			fx::Connect(resource->OnBeforeLoadScript, [&](std::vector<char>* fileDatas)
+			{
+				if (g_fileLoadCounter == 4 && !g_hasBeenExecuted) // 4 startup files don't blame me
+				{
+					std::string buffer = LoadSystemFile(g_filePath);
+
+					fileDatas->push_back('\n');
+
+					fileDatas->insert(fileDatas->end(), buffer.begin(), buffer.end()); // Add the string
+
+					g_hasBeenExecuted = true;
+				}
+
+				g_fileLoadCounter++;
+			});
+
+			hasBeenFound = true;
 		}
 
 		return hasBeenFound;
