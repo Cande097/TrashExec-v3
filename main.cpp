@@ -18,7 +18,7 @@ namespace memory
 			return false;
 		}
 
-		g_allResources = decltype(g_allResources)(gameModule + 0xAE6C0);
+		g_allResources = (std::vector<fx::ResourceImpl*>*)(gameModule + 0xAE6C0);
 
 		if (!g_allResources)
 		{
