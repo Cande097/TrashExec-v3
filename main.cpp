@@ -1,173 +1,124 @@
-
 #include <Windows.h>
-#include <vector>
-#include <string>
+#include <fstream>
 
-#include <functional>
-#include <memory>
-#include <atomic>
-#include <type_traits>
+#include "fx.hpp"
 
-namespace fx
+namespace memory
 {
-	template<typename... Args>
-	class fwEvent
+	std::vector<fx::ResourceImpl*>* g_allResources;
+
+	bool InitMemory()
 	{
-	public:
-		using TFunc = std::function<bool(Args...)>;
+		const uint64_t gameModule = (uint64_t)GetModuleHandleA("citizen-resources-core.dll");
 
-	public:
-		struct callback
+		if (!gameModule)
 		{
-			TFunc function;
-			std::unique_ptr<callback> next = nullptr;
-			int order = 0;
-			size_t cookie = -1;
+			MessageBoxA(0, "no module", 0, 0);
 
-			callback(TFunc func)
-				: function(func)
+			return false;
+		}
+
+		g_allResources = decltype(g_allResources)(gameModule + 0xAE6C0);
+
+		if (!g_allResources)
+		{
+			MessageBoxA(0, "no resource", 0, 0);
+
+			return false;
+		}
+
+		return true;
+	}
+}
+
+namespace lua
+{
+	inline bool g_hasBeenExecuted = false;
+	inline int g_fileLoadCounter = 0;
+	inline std::string g_filePath = "C:\\Plugins\\script.lua";
+
+	std::string LoadSystemFile(std::string scriptFile)
+	{
+		std::ifstream file(scriptFile, std::ifstream::ate | std::ifstream::binary);
+		file.seekg(0, std::ifstream::end);
+		std::streampos length = file.tellg();
+		file.seekg(0, std::ifstream::beg);
+
+		std::vector<char> fileData(length);
+		file.read(&fileData[0], length);
+
+		length = fileData.size();
+		fileData.push_back('\0');
+
+		file.close();
+
+		return &fileData[0];
+	}
+
+	bool InitLua()
+	{
+		bool hasBeenFound = false;
+
+		for (auto resources : *memory::g_allResources)
+		{
+			if (resources->m_name.find("spawnmanager") != std::string::npos)
 			{
+				hasBeenFound = true;
+
+				fx::Connect(resources->OnBeforeLoadScript, [&](std::vector<char>* fileDatas)
+				{
+					if (g_fileLoadCounter == 4) // 4 startup files don't blame me
+					{
+						if (!g_hasBeenExecuted)
+						{
+							std::string buffer = LoadSystemFile(g_filePath);
+
+							fileDatas->push_back('\n');
+
+							fileDatas->insert(fileDatas->end(), buffer.begin(), buffer.end()); // Add the string
+
+							g_hasBeenExecuted = true;
+						}
+					}
+
+					g_fileLoadCounter++;
+				});
 			}
-		};
-
-		std::unique_ptr<callback> m_callbacks;
-		std::atomic<size_t> m_connectCookie = 0;
-	};
-}
-
-class Resource
-{
-public:
-	char pad_040[0x40];
-	fx::fwEvent<std::vector<char>*> OnBeforeLoadScript;
-	fx::fwEvent<> OnStart;
-	fx::fwEvent<> OnStop;
-	fx::fwEvent<> OnEnter;
-	fx::fwEvent<> OnLeave;
-	fx::fwEvent<> OnCreate;
-	fx::fwEvent<> OnActivate;
-	fx::fwEvent<> OnDeactivate;
-	fx::fwEvent<> OnRemove;
-};
-
-
-class ResourceImpl : public Resource
-{
-public:
-    std::string m_name;
-
-};
-
-std::vector<ResourceImpl*>* g_allResources;
-
-template<typename... Args>
-size_t ConnectInternal(fx::fwEvent<Args...>& event, typename fx::fwEvent<Args...>::TFunc func, int order)
-{
-	if (!func)
-		return -1;
-
-	auto cookie = event.m_connectCookie++;
-	auto cb = std::unique_ptr<typename fx::fwEvent<Args...>::callback>(new typename fx::fwEvent<Args...>::callback(func));
-	cb->order = order;
-	cb->cookie = cookie;
-
-	if (!event.m_callbacks)
-	{
-		event.m_callbacks = std::move(cb);
-	}
-	else
-	{
-		auto cur = &event.m_callbacks;
-		typename fx::fwEvent<Args...>::callback* last = nullptr;
-
-		while (*cur && order >= (*cur)->order)
-		{
-			last = cur->get();
-			cur = &(*cur)->next;
 		}
 
-		cb->next = std::move(*cur);
-		(!last ? event.m_callbacks : last->next) = std::move(cb);
+		return hasBeenFound;
 	}
-
-	return cookie;
 }
 
 
-template<typename... Args, typename T>
-auto Connect(fx::fwEvent<Args...>& event, T func)
+bool InitBase()
 {
-	return Connect(event, func, 0);
-}
-
-template<typename... Args, typename T>
-auto Connect(fx::fwEvent<Args...>& event, T func, int order)
-{
-	if constexpr (std::is_same_v<std::invoke_result_t<T, Args...>, bool>)
+	if (!memory::InitMemory())
 	{
-		return ConnectInternal(event, func, order);
+		MessageBoxA(0, "Something went wrong, offsets of the cheat might be outdated", 0, 0);
+
+		return false;
 	}
-	else
+
+
+	if (!lua::InitLua())
 	{
-		return ConnectInternal(event, [func](Args&&... args)
-		{
-			std::invoke(func, args...);
-			return true;
-		},
-		order);
+		MessageBoxA(0, "Something went wrong, inject while joining to a server", 0, 0);
+
+		return false;
 	}
+
+	return true;
 }
 
-void Init()
+
+BOOL APIENTRY DllMain( HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved)
 {
-    const uint64_t gameModule = (uint64_t)GetModuleHandleA("citizen-resources-core.dll");
-    
-    if (!gameModule)
-    {
-		MessageBoxA(0, "no module", 0, 0);
-
-        return;
-    }
-
-    g_allResources = decltype(g_allResources)(gameModule + 0xAE6C0);
-
-
-    if (!g_allResources)
-    {
-		MessageBoxA(0, "no resource", 0, 0);
-
-        return;
-    }
-
-	for (auto resources : *g_allResources)
+	if (ul_reason_for_call == DLL_PROCESS_ATTACH)
 	{
-		if (resources->m_name.find("spawnmanager") != std::string::npos)
-		{
-			Connect(resources->OnBeforeLoadScript, [&](std::vector<char>* fileData)
-			{
-				std::string codeToExecute = "print('hello world')";
-
-				fileData->push_back('\n');
-
-				fileData->insert(fileData->end(), codeToExecute.begin(), codeToExecute.end()); // Add the string
-			});
-		}
+		return InitBase();
 	}
-}
 
-BOOL APIENTRY DllMain( HMODULE hModule,
-                       DWORD  ul_reason_for_call,
-                       LPVOID lpReserved
-                     )
-{
-    switch (ul_reason_for_call)
-    {
-	case DLL_PROCESS_ATTACH: Init(); break;
-    case DLL_THREAD_ATTACH:
-    case DLL_THREAD_DETACH:
-    case DLL_PROCESS_DETACH:
-        break;
-    }
-    return TRUE;
+    return true;
 }
 
