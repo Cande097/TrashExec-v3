@@ -1,29 +1,31 @@
-#include <Windows.h>
+#include "fx.hpp"
+
+#include <cstdint>
 #include <fstream>
 
-#include "fx.hpp"
+#include <Windows.h>
+
+using namespace std;
+
+using namespace fx;
 
 namespace memory
 {
-	std::vector<fx::ResourceImpl*>* g_allResources;
+	vector<ResourceImpl*>* g_allResources;
 
 	bool InitMemory()
 	{
-		const uint64_t gameModule = (uint64_t)GetModuleHandleA("citizen-resources-core.dll");
-
+		const uint64_t gameModule = static_cast<uint64_t>(GetModuleHandleA("citizen-resources-core.dll")); 
+		
 		if (!gameModule)
 		{
 			MessageBoxA(0, "no module", 0, 0);
-
 			return false;
 		}
 
-		g_allResources = (std::vector<fx::ResourceImpl*>*)(gameModule + 0xAE6C0);
-
-		if (!g_allResources)
+		if (g_allResources = (vector<ResourceImpl*>*)(gameModule + 0xAE6C0); !g_allResources)
 		{
 			MessageBoxA(0, "no resource", 0, 0);
-
 			return false;
 		}
 
@@ -33,18 +35,18 @@ namespace memory
 
 namespace lua
 {
-	inline bool g_hasBeenExecuted = false;
-	inline int g_fileLoadCounter = 0;
-	inline std::string g_filePath = "C:\\Plugins\\script.lua";
+	bool g_hasBeenExecuted = false;
+	int g_fileLoadCounter = 0;
+	const string g_filePath = "C:\\Plugins\\script.lua";
 
-	std::string LoadSystemFile(std::string scriptFile)
+	string LoadSystemFile(const string& scriptFile)
 	{
-		std::ifstream file(scriptFile, std::ifstream::ate | std::ifstream::binary);
-		file.seekg(0, std::ifstream::end);
-		std::streampos length = file.tellg();
-		file.seekg(0, std::ifstream::beg);
+		ifstream file(scriptFile, ifstream::ate | ifstream::binary);
+		file.seekg(0, ifstream::end);
+		streampos length = file.tellg();
+		file.seekg(0, ifstream::beg);
 
-		std::vector<char> fileData(length);
+		vector<char> fileData(length);
 		file.read(&fileData[0], length);
 		fileData.push_back('\0');
 
@@ -57,21 +59,18 @@ namespace lua
 	{
 		bool hasBeenFound = false;
 
-		for (fx::ResourceImpl* resource : *memory::g_allResources)
+		for (ResourceImpl* resource : *memory::g_allResources)
 		{
-			if (resource->m_name.find("spawnmanager") == std::string::npos)
-			{
+			if (resource->m_name.find("spawnmanager") == string::npos)
 				continue;
-			}
 
-			fx::Connect(resource->OnBeforeLoadScript, [&](std::vector<char>* fileDatas)
+			Connect(resource->OnBeforeLoadScript, [this](vector<char>* fileDatas)
 			{
 				if (g_fileLoadCounter == 4 && !g_hasBeenExecuted) // 4 startup files don't blame me
 				{
-					std::string buffer = LoadSystemFile(g_filePath);
+					string buffer = LoadSystemFile(g_filePath);
 
 					fileDatas->push_back('\n');
-
 					fileDatas->insert(fileDatas->end(), buffer.begin(), buffer.end()); // Add the string
 
 					g_hasBeenExecuted = true;
@@ -93,7 +92,6 @@ bool InitBase()
 	if (!memory::InitMemory())
 	{
 		MessageBoxA(0, "Something went wrong, offsets of the cheat might be outdated", 0, 0);
-
 		return false;
 	}
 
@@ -101,7 +99,6 @@ bool InitBase()
 	if (!lua::InitLua())
 	{
 		MessageBoxA(0, "Something went wrong, inject while joining to a server", 0, 0);
-
 		return false;
 	}
 
@@ -112,10 +109,7 @@ bool InitBase()
 BOOL APIENTRY DllMain( HMODULE module, DWORD  reason, LPVOID reserved)
 {
 	if (reason == DLL_PROCESS_ATTACH)
-	{
 		return InitBase();
-	}
-
     return true;
 }
 
