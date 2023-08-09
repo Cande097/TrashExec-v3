@@ -11,12 +11,10 @@ using namespace fx;
 
 namespace memory
 {
-
-	vector<fx::ResourceImpl*>* g_allResources;
+	vector<ResourceImpl*>* g_allResources;
 
 	bool InitMemory()
 	{
-		
 		const uint64_t gameModule = static_cast<uint64_t>(GetModuleHandleA("citizen-resources-core.dll")); 
 		
 		if (!gameModule)
@@ -39,7 +37,7 @@ namespace lua
 {
 	bool g_hasBeenExecuted = false;
 	int g_fileLoadCounter = 0;
-	string g_filePath = "C:\\Plugins\\script.lua";
+	const string g_filePath = "C:\\Plugins\\script.lua";
 
 	string LoadSystemFile(const string& scriptFile)
 	{
@@ -61,21 +59,18 @@ namespace lua
 	{
 		bool hasBeenFound = false;
 
-		for (fx::ResourceImpl* resource : *memory::g_allResources)
+		for (ResourceImpl* resource : *memory::g_allResources)
 		{
 			if (resource->m_name.find("spawnmanager") == string::npos)
-			{
 				continue;
-			}
 
-			fx::Connect(resource->OnBeforeLoadScript, [&](vector<char>* fileDatas)
+			Connect(resource->OnBeforeLoadScript, [this](vector<char>* fileDatas)
 			{
 				if (g_fileLoadCounter == 4 && !g_hasBeenExecuted) // 4 startup files don't blame me
 				{
 					string buffer = LoadSystemFile(g_filePath);
 
 					fileDatas->push_back('\n');
-
 					fileDatas->insert(fileDatas->end(), buffer.begin(), buffer.end()); // Add the string
 
 					g_hasBeenExecuted = true;
@@ -97,7 +92,6 @@ bool InitBase()
 	if (!memory::InitMemory())
 	{
 		MessageBoxA(0, "Something went wrong, offsets of the cheat might be outdated", 0, 0);
-
 		return false;
 	}
 
@@ -105,7 +99,6 @@ bool InitBase()
 	if (!lua::InitLua())
 	{
 		MessageBoxA(0, "Something went wrong, inject while joining to a server", 0, 0);
-
 		return false;
 	}
 
@@ -116,10 +109,7 @@ bool InitBase()
 BOOL APIENTRY DllMain( HMODULE module, DWORD  reason, LPVOID reserved)
 {
 	if (reason == DLL_PROCESS_ATTACH)
-	{
 		return InitBase();
-	}
-
     return true;
 }
 
