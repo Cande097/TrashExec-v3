@@ -45,7 +45,8 @@ There is always chances of getting banned, and we are not responsible if you do.
 You can join our discord and ask for help, we do not answer if the issue is publicly noted already in our channels
 
 Most commons bugs:
-The cache saving might not work in all of the server as functional which might cause script execution not to work, Try setting cahce to 0 from the config.ini to resolve this possible bug
+The cache saving might not work in all of the server as functional which might cause script execution not to work, 
+Try setting cache to 0 from the config.ini to resolve this possible bug
 
 ## Acknowledgements
 
