@@ -29,3 +29,20 @@ First of all remember that this ini system takes restart of game to apply result
 | resource | You can specify exact resource to inject into: Example: spawnmanager | 
 | index | You can specify exact script from the resource to inject into: These indexes can be found from the cache saver, for example script_0 from resource means that index of script is 0 |
 | replace | Can be set to 0 or 1, If set to 1 the script execution will replace the original script with the script we have given it, If set to 0 it will insert our given script after the script.    |
+
+## FAQ
+
+#### Can i resell this product
+
+No you cannot, the updates as open source will stop soon as people start people start reselling
+
+#### Is there chances of getting banned?
+
+There is always chances of getting banned, and we are not responsible if you do.
+
+#### What can i do if it doesn't work for me?
+
+You can join our discord and ask for help, we do not answer if the issue is publicly noted already in our channels
+
+Most commons bugs:
+The cache saving might not work in all of the server as functional which might cause script execution not to work, Try setting cahce to 0 from the config.ini to resolve this possible bug
