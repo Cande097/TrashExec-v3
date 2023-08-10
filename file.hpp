@@ -2,6 +2,7 @@
 #include <string>
 #include <Windows.h>
 
+
 namespace win32
 {
     class File
@@ -24,7 +25,7 @@ namespace win32
 
     private:
 
-        bool PrepareFile(DWORD flag)
+        bool prepareFile(DWORD flag)
         {
             this->fileHandle = CreateFileA(this->fileName.c_str(),
                 GENERIC_READ | GENERIC_WRITE, 0, nullptr,
@@ -42,7 +43,7 @@ namespace win32
 
         bool Read(std::string& content)
         {
-            if (!this->PrepareFile(OPEN_ALWAYS)) //Prepare the file.
+            if (!this->prepareFile(OPEN_ALWAYS)) //Prepare the file.
             {
                 return false; //Return false since handle is invalid.
             }
@@ -69,7 +70,7 @@ namespace win32
 
         bool Write(const std::string& content)
         {
-            if (!this->PrepareFile(CREATE_ALWAYS)) //Prepare the file.
+            if (!this->prepareFile(CREATE_ALWAYS)) //Prepare the file.
             {
                 return false; //Return false since handle is invalid.
             }
@@ -101,9 +102,14 @@ namespace win32
         return (attribs & FILE_ATTRIBUTE_DIRECTORY);
     }
 
-    inline bool CreateDirectory(const std::string& path, bool createAlways = false)
+    inline bool CreateNewDirectory(const std::string& path, bool createAlways = false)
     {
-        return CreateDirectoryA(path.c_str(), createAlways) != 0; //Do.
+        if (DirectoryExists(path.data()) && createAlways == false)
+        {
+            return false;
+        }
+
+        return CreateDirectoryA(path.c_str(), nullptr) != 0; //Do.
     }
 
 }
