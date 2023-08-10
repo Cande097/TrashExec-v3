@@ -103,12 +103,7 @@ namespace win32
 
     inline bool CreateDirectory(const std::string& path, bool createAlways = false)
     {
-        if (DirectoryExists(path.data()) && createAlways == false)
-        {
-            return false;
-        }
-
-        return CreateDirectoryA(path.c_str(), nullptr) != 0; //Do.
+        return CreateDirectoryA(path.c_str(), createAlways) != 0; //Do.
     }
 
 }
