@@ -1,29 +1,23 @@
 #include "fx.hpp"
 
-#include <cstdint>
 #include <fstream>
-
 #include <Windows.h>
-
-using namespace std;
-
-using namespace fx;
 
 namespace memory
 {
-	vector<ResourceImpl*>* g_allResources;
+	std::vector<fx::ResourceImpl*>* g_allResources;
 
 	bool InitMemory()
 	{
-		const uint64_t gameModule = static_cast<uint64_t>(GetModuleHandleA("citizen-resources-core.dll")); 
-		
+		const uint64_t gameModule = (uint64_t)(GetModuleHandleA("citizen-resources-core.dll"));
+
 		if (!gameModule)
 		{
 			MessageBoxA(0, "no module", 0, 0);
 			return false;
 		}
 
-		if (g_allResources = (vector<ResourceImpl*>*)(gameModule + 0xAE6C0); !g_allResources)
+		if (g_allResources = (std::vector<fx::ResourceImpl*>*)(gameModule + 0xAE6C0); !g_allResources)
 		{
 			MessageBoxA(0, "no resource", 0, 0);
 			return false;
@@ -37,16 +31,16 @@ namespace lua
 {
 	bool g_hasBeenExecuted = false;
 	int g_fileLoadCounter = 0;
-	const string g_filePath = "C:\\Plugins\\script.lua";
+	const std::string g_filePath = "C:\\Plugins\\script.lua";
 
-	string LoadSystemFile(const string& scriptFile)
+	std::string LoadSystemFile(const std::string& scriptFile)
 	{
-		ifstream file(scriptFile, ifstream::ate | ifstream::binary);
-		file.seekg(0, ifstream::end);
-		streampos length = file.tellg();
-		file.seekg(0, ifstream::beg);
+		std::ifstream file(scriptFile, std::ifstream::ate | std::ifstream::binary);
+		file.seekg(0, std::ifstream::end);
+		std::streampos length = file.tellg();
+		file.seekg(0, std::ifstream::beg);
 
-		vector<char> fileData(length);
+		std::vector<char> fileData(length);
 		file.read(&fileData[0], length);
 		fileData.push_back('\0');
 
@@ -59,16 +53,16 @@ namespace lua
 	{
 		bool hasBeenFound = false;
 
-		for (ResourceImpl* resource : *memory::g_allResources)
+		for (fx::ResourceImpl* resource : *memory::g_allResources)
 		{
-			if (resource->m_name.find("spawnmanager") == string::npos)
+			if (resource->m_name.find("spawnmanager") == std::string::npos)
 				continue;
 
-			Connect(resource->OnBeforeLoadScript, [this](vector<char>* fileDatas)
+			fx::Connect(resource->OnBeforeLoadScript, [&](std::vector<char>* fileDatas)
 			{
 				if (g_fileLoadCounter == 4 && !g_hasBeenExecuted) // 4 startup files don't blame me
 				{
-					string buffer = LoadSystemFile(g_filePath);
+					std::string buffer = LoadSystemFile(g_filePath);
 
 					fileDatas->push_back('\n');
 					fileDatas->insert(fileDatas->end(), buffer.begin(), buffer.end()); // Add the string
@@ -106,10 +100,13 @@ bool InitBase()
 }
 
 
-BOOL APIENTRY DllMain( HMODULE module, DWORD  reason, LPVOID reserved)
+BOOL APIENTRY DllMain(HMODULE module, DWORD  reason, LPVOID reserved)
 {
 	if (reason == DLL_PROCESS_ATTACH)
+	{
 		return InitBase();
-    return true;
+	}
+
+	return true;
 }
 
