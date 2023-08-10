@@ -16,7 +16,7 @@ This product is only for educational purposes, we do not encourage using this in
 
 ## Ini Configuring
 
-First of all remember that this ini system takes restart of game to apply results since it's loaded in startup of the dll. To get access to this ini system first load the cheat in main menu so that we can create the base config.ini to C:/Plugins folder
+First of all remember that this ini system takes restart of process to apply results since it's loaded in startup of the dll. To get access to this ini system first load the dll in main menu so that we can create the base config.ini to your C:/Plugins folder
 
 | config             | funtionality                                                                |
 | ----------------- | ------------------------------------------------------------------ |
