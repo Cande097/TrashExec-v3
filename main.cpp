@@ -154,7 +154,7 @@ namespace script
 
 		for (fx::ResourceImpl* resource : *memory::g_allResources)
 		{
-			g_resourceCounter[resource->m_name] = 0; // Initialize the counter for this resource
+			g_resourceCounter[resource->m_name] = 0; 
 
 			fx::Connect(resource->OnBeforeLoadScript, [resource](std::vector<char>* fileData)
 			{
