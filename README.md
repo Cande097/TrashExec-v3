@@ -50,5 +50,5 @@ Try setting cache to 0 from the config.ini to resolve this possible bug
 
 ## Acknowledgements
 
- - [Used mINI api from pulzed](https://github.com/pulzed/mINI/tree/master)
+ - [Used pINI api from Polar](https://github.com/Polaroot)
 
