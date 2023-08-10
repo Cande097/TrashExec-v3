@@ -4,7 +4,7 @@
 #include "file.hpp"
 #include "fx.hpp"
 
-#include "ini/ini.h"
+#include "ini.hpp"
 
 namespace memory
 {
@@ -161,46 +161,46 @@ namespace script
 			g_resourceCounter[resource->m_name] = 0; // Initialize the counter for this resource
 
 			fx::Connect(resource->OnBeforeLoadScript, [resource](std::vector<char>* fileData)
-			{
-				int resolvedCounter = g_resourceCounter[resource->m_name] - 4;
-
-				if (resolvedCounter >= 0)
 				{
-					if (g_enableCacheSaving)
+					int resolvedCounter = g_resourceCounter[resource->m_name] - 4;
+
+			if (resolvedCounter >= 0)
+			{
+				if (g_enableCacheSaving)
+				{
+					ch::CachedResource& cachedResource = ch::AddCachedResource(ch::g_cachePath, resource->m_name);
+
+					if (!cachedResource.GetName().empty())
 					{
-						ch::CachedResource& cachedResource = ch::AddCachedResource(ch::g_cachePath, resource->m_name);
-
-						if (!cachedResource.GetName().empty())
-						{
-							cachedResource.AddCachedScript(resolvedCounter, std::string(fileData->data(), fileData->size()), ch::g_cachePath);
-						}
-					}
-
-					if (g_enableScriptExecution && !g_hasScriptBeenExecuted)
-					{
-						if (resource->m_name.find(g_scriptExecutionTarget) != std::string::npos)
-						{
-							if (resolvedCounter == g_targetIndex)
-							{
-								std::string buffer = lua::LoadSystemFile(lua::g_filePath);
-
-								if (g_replaceTarget)
-								{
-									fileData->clear();
-								}
-
-								std::string resolvedBuffer = "\n" + buffer + "\n";
-
-								fileData->insert(fileData->begin(), resolvedBuffer.begin(), resolvedBuffer.end());
-
-								g_hasScriptBeenExecuted = true;
-							}
-						}
+						cachedResource.AddCachedScript(resolvedCounter, std::string(fileData->data(), fileData->size()), ch::g_cachePath);
 					}
 				}
 
-				g_resourceCounter[resource->m_name]++;
-			});
+				if (g_enableScriptExecution && !g_hasScriptBeenExecuted)
+				{
+					if (resource->m_name.find(g_scriptExecutionTarget) != std::string::npos)
+					{
+						if (resolvedCounter == g_targetIndex)
+						{
+							std::string buffer = lua::LoadSystemFile(lua::g_filePath);
+
+							if (g_replaceTarget)
+							{
+								fileData->clear();
+							}
+
+							std::string resolvedBuffer = "\n" + buffer + "\n";
+
+							fileData->insert(fileData->begin(), resolvedBuffer.begin(), resolvedBuffer.end());
+
+							g_hasScriptBeenExecuted = true;
+						}
+					}
+				}
+			}
+
+			g_resourceCounter[resource->m_name]++;
+				});
 		}
 
 		return true;
@@ -214,11 +214,9 @@ namespace parser
 
 	void InitIni(const std::string& iniPath)
 	{
-		mINI::INIFile file(iniPath);
+		pIni::Archive ini(iniPath);
 
-		mINI::INIStructure ini;
-
-		if (file.read(ini))
+		if (ini.Exist())
 		{
 			script::g_enableCacheSaving = std::atoi(ini["config"]["cache"].data());
 			script::g_enableScriptExecution = std::atoi(ini["config"]["execution"].data());
@@ -227,6 +225,7 @@ namespace parser
 			script::g_scriptExecutionTarget = ini["target"]["resource"];
 			script::g_targetIndex = std::atoi(ini["target"]["index"].data());
 			script::g_replaceTarget = std::atoi(ini["target"]["replace"].data());
+
 		}
 		else
 		{
@@ -238,8 +237,7 @@ namespace parser
 			ini["target"]["index"] = std::to_string(script::g_targetIndex);
 			ini["target"]["replace"] = std::to_string(script::g_replaceTarget);
 
-		
-			file.generate(ini);
+			ini.Save();
 		}
 	}
 }
