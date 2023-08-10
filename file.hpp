@@ -4,9 +4,9 @@ private:
 
     struct
     {
-        HANDLE fileHandle = (void*)-1;
-
         std::string fileName = nullptr;
+
+        HANDLE fileHandle = INVALID_HANDLE_VALUE;
     };
 
 public:
