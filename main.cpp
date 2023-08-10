@@ -72,7 +72,6 @@ namespace ch
 				"\\script_" + std::to_string(index) + ".lua");
 
 			fileHandle.Write(data);
-			fileHandle.Close();
 		
 			return true;
 		}
@@ -124,7 +123,6 @@ namespace lua
 		std::string fileData;
 
 		fileHandle.Read(fileData);
-		fileHandle.Close();
 
 		return fileData.data();
 	}
