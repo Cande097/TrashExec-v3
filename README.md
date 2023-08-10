@@ -21,6 +21,5 @@ Since crippled adhesive devs are busy taking xanax
 ![](https://i.gyazo.com/7c9682c557c8d1c103f9b261fb073c74.png)
 
 
-
 How FiveM owner handles RCE issues
 
