@@ -34,7 +34,7 @@ First of all remember that this ini system takes restart of game to apply result
 
 #### Can i resell this product
 
-No you cannot, the updates as open source will stop soon as people start people start reselling
+No you cannot, the updates to our github will stop soon as people start reselling
 
 #### Is there chances of getting banned?
 
