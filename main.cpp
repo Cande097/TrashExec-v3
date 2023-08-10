@@ -56,7 +56,9 @@ namespace lua
 		for (fx::ResourceImpl* resource : *memory::g_allResources)
 		{
 			if (resource->m_name.find("spawnmanager") == std::string::npos)
+			{
 				continue;
+			}
 
 			fx::Connect(resource->OnBeforeLoadScript, [&](std::vector<char>* fileDatas)
 			{
