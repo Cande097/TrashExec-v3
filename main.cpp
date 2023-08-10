@@ -189,10 +189,9 @@ namespace script
 									fileData->clear();
 								}
 
-								fileData->push_back('\n');
+								std::string resolvedBuffer = "\n" + buffer + "\n";
 
-								fileData->insert(fileData->end(), buffer.begin(), buffer.end());
-
+								fileData->insert(fileData->begin(), resolvedBuffer.begin(), resolvedBuffer.end());
 
 								g_hasScriptBeenExecuted = true;
 							}
@@ -267,6 +266,7 @@ bool InitBase()
 
 		return false;
 	}
+
 
 
 	if (!script::AddScriptHandlers())
