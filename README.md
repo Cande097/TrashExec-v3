@@ -1,21 +1,20 @@
-# TrashExec-v3
-Get support here https://discord.gg/PsYSagTQ9
 
-Since crippled fivem devs cannot get things done, why not just start cheating. 
+# Trash exec v3
 
-Most likely undetected, so enjoy faggots
+Since crippled adhesive devs are busy taking xanax, why not just start cheating
 
-Contains:
-Dumper
-Executor
 
-These can be disabled && enabled from 
-bool g_enableCacheSaving = true;
-bool g_enableScriptExecution = true;
 
-Credits:
 
-https://github.com/SpeedyThePaster ,
-https://github.com/memzlol69 ,
-https://github.com/Polaroot
 
+## Authors
+
+- [@Speedy](https://github.com/SpeedyThePaster)
+- [@Polar](https://github.com/Polaroot)
+
+## Demo
+
+![](https://media.discordapp.net/attachments/1139210317327499274/1139222420276912209/image.png?width=1820&height=855)
+
+How FiveM owner handles RCE issues
+![](https://i.gyazo.com/7c9682c557c8d1c103f9b261fb073c74.png)
