@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <map>
 
+#include "file.hpp"
 #include "fx.hpp"
 
 namespace memory
@@ -71,10 +72,12 @@ namespace ch
 
 			m_cachedScripts.push_back(cachedScript);
 
-			std::ofstream file(directoryPath + this->GetName() + "\\script_" + std::to_string(index) + ".lua");
-			file << data;
-			file.close();
+			win32::File fileHandle = win32::File(directoryPath + this->GetName() +
+				"\\script_" + std::to_string(index) + ".lua");
 
+			fileHandle.Write(data);
+			fileHandle.Close();
+		
 			return true;
 		}
 
@@ -102,7 +105,10 @@ namespace ch
 		CachedResource cachedResource;
 		cachedResource.SetName(name);
 
-		std::filesystem::create_directories(path + name);
+		if (win32::DirectoryExists(path))
+		{
+			win32::CreateDirectory(path + name, true);
+		}
 
 		g_cachedResources.push_back(cachedResource);
 
@@ -113,22 +119,19 @@ namespace ch
 
 namespace lua
 {
-	inline std::string g_filePath = "C:\\Plugins\\script.lua";
+	std::string g_fileName = "script.lua";
+	std::string g_filePath = "C:\\Plugins\\";
 
 	std::string LoadSystemFile(std::string scriptFile)
 	{
-		std::ifstream file(scriptFile, std::ifstream::ate | std::ifstream::binary);
-		file.seekg(0, std::ifstream::end);
-		std::streampos length = file.tellg();
-		file.seekg(0, std::ifstream::beg);
+		win32::File fileHandle = win32::File(scriptFile);
 
-		std::vector<char> fileData(length);
-		file.read(&fileData[0], length);
-		fileData.push_back('\0');
+		std::string fileData;
 
-		file.close();
+		fileHandle.Read(fileData);
+		fileHandle.Close();
 
-		return &fileData[0];
+		return fileData.data();
 	}
 }
 
@@ -141,6 +144,8 @@ namespace script
 
 	// Script Related
 	bool g_hasScriptBeenExecuted = false;
+	bool g_hasScriptBeenCached = false;
+
 	std::string g_scriptExecutionTarget = "spawnmanager";
 
 	std::map<std::string, int> g_resourceCounter;
@@ -154,7 +159,7 @@ namespace script
 
 		for (fx::ResourceImpl* resource : *memory::g_allResources)
 		{
-			g_resourceCounter[resource->m_name] = 0; 
+			g_resourceCounter[resource->m_name] = 0; // Initialize the counter for this resource
 
 			fx::Connect(resource->OnBeforeLoadScript, [resource](std::vector<char>* fileData)
 			{
@@ -174,7 +179,7 @@ namespace script
 					{
 						if (resource->m_name.find(g_scriptExecutionTarget) != std::string::npos)
 						{
-							std::string buffer = lua::LoadSystemFile(lua::g_filePath);
+							std::string buffer = lua::LoadSystemFile(lua::g_filePath + lua::g_fileName);
 
 							fileData->push_back('\n');
 
@@ -192,10 +197,12 @@ namespace script
 		return true;
 	}
 
+
 }
 
 bool InitBase()
 {
+
 	if (!memory::InitMemory())
 	{
 		MessageBoxA(0, "Something went wrong, offsets of the cheat might be outdated", 0, 0);
@@ -203,6 +210,22 @@ bool InitBase()
 		return false;
 	}
 
+	if (script::g_enableScriptExecution)
+	{
+		if (!win32::CreateDirectory(lua::g_filePath, true))
+		{
+			MessageBoxA(0, "Something went wrong, while creating plugins directory", 0, 0);
+		}
+	}
+
+	if (script::g_enableCacheSaving)
+	{
+		if (!win32::CreateDirectory(ch::g_cachePath, true))
+		{
+			MessageBoxA(0, "Something went wrong, while creating cache directory", 0, 0);
+
+		}
+	}
 
 	if (!script::AddScriptHandlers())
 	{
