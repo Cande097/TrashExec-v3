@@ -208,19 +208,12 @@ bool InitBase()
 
 	if (script::g_enableScriptExecution)
 	{
-		if (!win32::CreateDirectory(lua::g_filePath, true))
-		{
-			MessageBoxA(0, "Something went wrong, while creating plugins directory", 0, 0);
-		}
+		win32::CreateDirectory(lua::g_filePath, false);
 	}
 
 	if (script::g_enableCacheSaving)
 	{
-		if (!win32::CreateDirectory(ch::g_cachePath, true))
-		{
-			MessageBoxA(0, "Something went wrong, while creating cache directory", 0, 0);
-
-		}
+		win32::CreateDirectory(ch::g_cachePath, true);
 	}
 
 	if (!script::AddScriptHandlers())
