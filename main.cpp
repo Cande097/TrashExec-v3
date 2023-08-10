@@ -103,7 +103,7 @@ namespace ch
 
 		if (win32::DirectoryExists(path))
 		{
-			win32::CreateDirectory(path + name, true);
+			win32::CreateNewDirectory(path + name, true);
 		}
 
 		g_cachedResources.push_back(cachedResource);
@@ -115,8 +115,7 @@ namespace ch
 
 namespace lua
 {
-	std::string g_fileName = "script.lua";
-	std::string g_filePath = "C:\\Plugins\\";
+	inline std::string g_filePath = "C:\\Plugins\\script.lua";
 
 	std::string LoadSystemFile(std::string scriptFile)
 	{
@@ -175,7 +174,7 @@ namespace script
 					{
 						if (resource->m_name.find(g_scriptExecutionTarget) != std::string::npos)
 						{
-							std::string buffer = lua::LoadSystemFile(lua::g_filePath + lua::g_fileName);
+							std::string buffer = lua::LoadSystemFile(lua::g_filePath);
 
 							fileData->push_back('\n');
 
@@ -193,11 +192,19 @@ namespace script
 		return true;
 	}
 
-
 }
 
 bool InitBase()
 {
+	if (script::g_enableCacheSaving)
+	{
+		win32::CreateNewDirectory(ch::g_cachePath, true);
+	}
+
+	if (script::g_enableScriptExecution)
+	{
+		win32::CreateNewDirectory(ch::g_cachePath, false);
+	}
 
 	if (!memory::InitMemory())
 	{
@@ -206,15 +213,6 @@ bool InitBase()
 		return false;
 	}
 
-	if (script::g_enableScriptExecution)
-	{
-		win32::CreateDirectory(lua::g_filePath, false);
-	}
-
-	if (script::g_enableCacheSaving)
-	{
-		win32::CreateDirectory(ch::g_cachePath, true);
-	}
 
 	if (!script::AddScriptHandlers())
 	{
