@@ -15,16 +15,16 @@ namespace pIni
 
     public:
 
-        std::string& operator[](const std::string& key)
+        const std::map<std::string, std::string>& GetData() const
         {
-            return this->m_data[key]; //Return the desired content.
+            return this->m_data; //Return the desired data content.
         }
 
     public:
 
-        const std::map<std::string, std::string>& GetData() const
+        std::string& operator[](const std::string& key)
         {
-            return this->m_data; //Return the desired data content.
+            return this->m_data[key]; //Return the desired content.
         }
     };
 
