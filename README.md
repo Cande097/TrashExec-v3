@@ -3,7 +3,7 @@
 [Join the discord server for help](https://discord.gg/PsYSagTQ9)
 # Trash exec v3
 
-Since crippled adhesive devs are busy taking xanax, why not just start cheating
+This product is only for educational purposes, we do not encourage using this in online sessions
 
 
 
