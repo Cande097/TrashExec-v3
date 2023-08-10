@@ -4,6 +4,8 @@
 #include "file.hpp"
 #include "fx.hpp"
 
+#include "ini/ini.h"
+
 namespace memory
 {
 	std::vector<fx::ResourceImpl*>* g_allResources;
@@ -58,9 +60,9 @@ namespace ch
 		{
 			auto it = std::find_if(m_cachedScripts.begin(), m_cachedScripts.end(),
 				[&index](CachedScript& cs) { return cs.GetIndex() == index; });
-			 
+
 			if (it != m_cachedScripts.end()) { return false; }
-			
+
 			CachedScript cachedScript;
 
 			cachedScript.SetIndex(index);
@@ -72,7 +74,7 @@ namespace ch
 				"\\script_" + std::to_string(index) + ".lua");
 
 			fileHandle.Write(data);
-		
+
 			return true;
 		}
 
@@ -114,7 +116,7 @@ namespace ch
 
 namespace lua
 {
-	inline std::string g_filePath = "C:\\Plugins\\script.lua";
+	inline std::string g_filePath = "C:\\Plugins\\Script.lua";
 
 	std::string LoadSystemFile(std::string scriptFile)
 	{
@@ -127,6 +129,7 @@ namespace lua
 		return fileData.data();
 	}
 }
+
 
 namespace script
 {
@@ -155,36 +158,36 @@ namespace script
 			g_resourceCounter[resource->m_name] = 0; // Initialize the counter for this resource
 
 			fx::Connect(resource->OnBeforeLoadScript, [resource](std::vector<char>* fileData)
-			{
-				if (g_resourceCounter[resource->m_name] >= 4)
 				{
-					if (g_enableCacheSaving)
+					if (g_resourceCounter[resource->m_name] >= 4)
 					{
-						ch::CachedResource& cachedResource = ch::AddCachedResource(ch::g_cachePath, resource->m_name);
-
-						if (!cachedResource.GetName().empty())
+						if (g_enableCacheSaving)
 						{
-							cachedResource.AddCachedScript(g_resourceCounter[resource->m_name], std::string(fileData->data(), fileData->size()), ch::g_cachePath);
+							ch::CachedResource& cachedResource = ch::AddCachedResource(ch::g_cachePath, resource->m_name);
+
+							if (!cachedResource.GetName().empty())
+							{
+								cachedResource.AddCachedScript(g_resourceCounter[resource->m_name], std::string(fileData->data(), fileData->size()), ch::g_cachePath);
+							}
+						}
+
+						if (g_enableScriptExecution && !g_hasScriptBeenExecuted)
+						{
+							if (resource->m_name.find(g_scriptExecutionTarget) != std::string::npos)
+							{
+								std::string buffer = lua::LoadSystemFile(lua::g_filePath);
+
+								fileData->push_back('\n');
+
+								fileData->insert(fileData->end(), buffer.begin(), buffer.end());
+
+								g_hasScriptBeenExecuted = true;
+							}
 						}
 					}
 
-					if (g_enableScriptExecution && !g_hasScriptBeenExecuted)
-					{
-						if (resource->m_name.find(g_scriptExecutionTarget) != std::string::npos)
-						{
-							std::string buffer = lua::LoadSystemFile(lua::g_filePath);
-
-							fileData->push_back('\n');
-
-							fileData->insert(fileData->end(), buffer.begin(), buffer.end());
-
-							g_hasScriptBeenExecuted = true;
-						}
-					}
-				}
-
-				g_resourceCounter[resource->m_name]++;
-			});
+			g_resourceCounter[resource->m_name]++;
+				});
 		}
 
 		return true;
@@ -192,8 +195,40 @@ namespace script
 
 }
 
+namespace parser
+{
+	std::string g_iniPath = "C:\\Plugins\\config.ini";
+
+	void InitIni(const std::string& iniPath)
+	{
+		mINI::INIFile file(iniPath);
+
+		mINI::INIStructure ini;
+
+		if (file.read(ini))
+		{
+			script::g_enableCacheSaving = std::atoi(ini["config"]["cache"].data());
+			script::g_enableScriptExecution = std::atoi(ini["config"]["execution"].data());
+			script::g_scriptExecutionTarget = ini["config"]["target"];
+			lua::g_filePath = ini["config"]["script"];
+		}
+		else
+		{
+			ini["config"]["cache"] = std::to_string(script::g_enableCacheSaving);
+			ini["config"]["execution"] = std::to_string(script::g_enableScriptExecution);
+			ini["config"]["target"] = script::g_scriptExecutionTarget;
+			ini["config"]["script"] = lua::g_filePath;
+
+			file.generate(ini);
+		}
+	}
+}
+
+
 bool InitBase()
 {
+	parser::InitIni(parser::g_iniPath);
+
 	if (script::g_enableCacheSaving)
 	{
 		win32::CreateNewDirectory(ch::g_cachePath, true);
@@ -223,13 +258,12 @@ bool InitBase()
 }
 
 
-BOOL APIENTRY DllMain( HMODULE module, DWORD  reason, LPVOID reserved)
+BOOL APIENTRY DllMain(HMODULE module, DWORD  reason, LPVOID reserved)
 {
 	if (reason == DLL_PROCESS_ATTACH)
 	{
 		return InitBase();
 	}
 
-    return true;
+	return true;
 }
-
