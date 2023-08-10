@@ -1,4 +1,6 @@
 # TrashExec-v3
+Get support here https://discord.gg/PsYSagTQ9
+
 Since crippled fivem devs cannot get things done, why not just start cheating. 
 
 Most likely undetected, so enjoy faggots
