@@ -46,3 +46,8 @@ You can join our discord and ask for help, we do not answer if the issue is publ
 
 Most commons bugs:
 The cache saving might not work in all of the server as functional which might cause script execution not to work, Try setting cahce to 0 from the config.ini to resolve this possible bug
+
+## Acknowledgements
+
+ - [Used mINI api from pulzed](https://github.com/pulzed/mINI/tree/master)
+
