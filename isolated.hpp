@@ -1,3 +1,6 @@
+#pragma once
+#include <algorithm>
+
 namespace isolated
 {
 	inline std::vector<uint8_t> isoBytes =
