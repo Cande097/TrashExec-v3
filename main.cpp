@@ -8,24 +8,45 @@
 
 namespace memory
 {
+
+	fx::NetLibrary** g_netLibrary;
+
 	std::vector<fx::ResourceImpl*>* g_allResources;
 
 	bool InitMemory()
 	{
-		const uint64_t gameModule = (uint64_t)GetModuleHandleA("citizen-resources-core.dll");
+		const uint64_t resourceModule = (uint64_t)GetModuleHandleA("citizen-resources-core.dll");
 
-		if (!gameModule)
+		if (!resourceModule)
 		{
-			MessageBoxA(0, "no module", 0, 0);
+			MessageBoxA(0, "Couldn't get base address of citizen resources core", 0, 0);
 
 			return false;
 		}
 
-		g_allResources = (std::vector<fx::ResourceImpl*>*)(gameModule + 0xAE6C0);
+		const uint64_t netFiveModule = (uint64_t)GetModuleHandleA("gta-net-five.dll");
+
+		if (!netFiveModule)
+		{
+			MessageBoxA(0, "Couldn't get base address of gta net five", 0, 0);
+
+			return false;
+		}
+
+		g_allResources = (std::vector<fx::ResourceImpl*>*)(resourceModule + 0xAE6C0);
 
 		if (!g_allResources)
 		{
 			MessageBoxA(0, "no resource", 0, 0);
+
+			return false;
+		}
+
+		g_netLibrary = (fx::NetLibrary**)(netFiveModule + 0x1F41D8);
+
+		if (!g_netLibrary)
+		{
+			MessageBoxA(0, "no net", 0, 0);
 
 			return false;
 		}
@@ -45,6 +66,27 @@ namespace memory
 namespace ch
 {
 	std::string g_cachePath = "C:\\Plugins\\Cache\\";
+
+	std::string ResolveFileBuffer(const std::string& filename)
+	{
+		std::string illegalWord = "http";
+		std::string illegalChars = "\\/:*?\"<>|";
+
+		std::string result = filename;
+
+		for (char c : illegalChars)
+		{
+			result.erase(std::remove(result.begin(), result.end(), c), result.end());
+		}
+
+		for (size_t pos = result.find(illegalWord); pos != std::string::npos; pos =
+			result.find(illegalWord, pos))
+		{
+			result.erase(pos, illegalWord.length());
+		}
+
+		return result;
+	}
 
 	class CachedScript
 	{
@@ -99,7 +141,7 @@ namespace ch
 
 	std::vector<CachedResource> g_cachedResources;
 
-	CachedResource& AddCachedResource(const std::string& path, const std::string& name)
+	CachedResource& AddCachedResource(const std::string& path,  const std::string& name)
 	{
 		auto it = std::find_if(g_cachedResources.begin(), g_cachedResources.end(),
 			[&name](CachedResource& cr) { return cr.GetName() == name; });
@@ -110,11 +152,13 @@ namespace ch
 		CachedResource cachedResource;
 		cachedResource.SetName(name);
 
-		if (win32::DirectoryExists(path))
+		if (!win32::DirectoryExists(path))
 		{
-			win32::CreateNewDirectory(path + name, true);
+			win32::CreateNewDirectory(path, true);
 		}
 
+		win32::CreateNewDirectory(path + name, true);
+		
 		g_cachedResources.push_back(cachedResource);
 
 		return g_cachedResources.back();
@@ -160,6 +204,7 @@ namespace script
 
 	std::map<std::string, int> g_resourceCounter;
 
+
 	bool AddScriptHandlers()
 	{
 		if ((*memory::g_allResources).size() <= 1)
@@ -179,11 +224,13 @@ namespace script
 				{
 					if (g_enableCacheSaving)
 					{
-						ch::CachedResource& cachedResource = ch::AddCachedResource(ch::g_cachePath, resource->m_name);
+						const std::string cachePath = ch::g_cachePath + ch::ResolveFileBuffer((*memory::g_netLibrary)->m_currentServerUrl) + "\\";
+
+						ch::CachedResource& cachedResource = ch::AddCachedResource(cachePath, resource->m_name);
 
 						if (!cachedResource.GetName().empty())
 						{
-							cachedResource.AddCachedScript(resolvedCounter, std::string(fileData->data(), fileData->size()), ch::g_cachePath);
+							cachedResource.AddCachedScript(resolvedCounter, std::string(fileData->data(), fileData->size()), cachePath);
 						}
 					}
 
