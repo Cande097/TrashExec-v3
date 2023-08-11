@@ -85,6 +85,14 @@ namespace win32
     };
 
 
+    inline bool FileExists(const std::string& path)
+    {
+        const auto attributes = GetFileAttributesA(path.data()); //Get.
+
+        return (attributes != INVALID_FILE_ATTRIBUTES)
+            && !(attributes & FILE_ATTRIBUTE_DIRECTORY); //Check file.
+    }
+
     inline bool DirectoryExists(const std::string& path)
     {
         const auto attributes = GetFileAttributesA(path.data()); //Get.
@@ -96,6 +104,8 @@ namespace win32
 
         return (attributes & FILE_ATTRIBUTE_DIRECTORY); //Check direct.
     }
+
+    inlin
 
     inline bool CreateNewDirectory(
         const std::string& path, bool createAlways = false)
