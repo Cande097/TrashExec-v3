@@ -57,15 +57,6 @@ namespace fx
 
 	};
 
-	class NetLibrary
-	{
-	public:
-		char pad[0x0f8];
-		std::string m_currentServerUrl;
-
-	};
-
-
 	template<typename... Args>
 	inline size_t ConnectInternal(fx::fwEvent<Args...>& event, typename fx::fwEvent<Args...>::TFunc func, int order)
 	{

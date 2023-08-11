@@ -3,50 +3,30 @@
 
 #include "file.hpp"
 #include "fx.hpp"
+#include "isolated.hpp"
 
 #include "ini.hpp"
 
 namespace memory
 {
-
-	fx::NetLibrary** g_netLibrary;
-
 	std::vector<fx::ResourceImpl*>* g_allResources;
 
 	bool InitMemory()
 	{
-		const uint64_t resourceModule = (uint64_t)GetModuleHandleA("citizen-resources-core.dll");
+		const uint64_t gameModule = (uint64_t)GetModuleHandleA("citizen-resources-core.dll");
 
-		if (!resourceModule)
+		if (!gameModule)
 		{
-			MessageBoxA(0, "Couldn't get base address of citizen resources core", 0, 0);
+			MessageBoxA(0, "no module", 0, 0);
 
 			return false;
 		}
 
-		const uint64_t netFiveModule = (uint64_t)GetModuleHandleA("gta-net-five.dll");
-
-		if (!netFiveModule)
-		{
-			MessageBoxA(0, "Couldn't get base address of gta net five", 0, 0);
-
-			return false;
-		}
-
-		g_allResources = (std::vector<fx::ResourceImpl*>*)(resourceModule + 0xAE6C0);
+		g_allResources = (std::vector<fx::ResourceImpl*>*)(gameModule + 0xAE6C0);
 
 		if (!g_allResources)
 		{
 			MessageBoxA(0, "no resource", 0, 0);
-
-			return false;
-		}
-
-		g_netLibrary = (fx::NetLibrary**)(netFiveModule + 0x1F41D8);
-
-		if (!g_netLibrary)
-		{
-			MessageBoxA(0, "no net", 0, 0);
 
 			return false;
 		}
@@ -65,28 +45,7 @@ namespace memory
 
 namespace ch
 {
-	std::string g_cachePath = "C:\\Plugins\\Cache\\";
-
-	std::string ResolveFileBuffer(const std::string& filename)
-	{
-		std::string illegalWord = "http";
-		std::string illegalChars = "\\/:*?\"<>|";
-
-		std::string result = filename;
-
-		for (char c : illegalChars)
-		{
-			result.erase(std::remove(result.begin(), result.end(), c), result.end());
-		}
-
-		for (size_t pos = result.find(illegalWord); pos != std::string::npos; pos =
-			result.find(illegalWord, pos))
-		{
-			result.erase(pos, illegalWord.length());
-		}
-
-		return result;
-	}
+	inline std::string g_cachePath = "C:\\Plugins\\Cache\\";
 
 	class CachedScript
 	{
@@ -141,7 +100,7 @@ namespace ch
 
 	std::vector<CachedResource> g_cachedResources;
 
-	CachedResource& AddCachedResource(const std::string& path,  const std::string& name)
+	CachedResource& AddCachedResource(const std::string& path, const std::string& name)
 	{
 		auto it = std::find_if(g_cachedResources.begin(), g_cachedResources.end(),
 			[&name](CachedResource& cr) { return cr.GetName() == name; });
@@ -152,13 +111,11 @@ namespace ch
 		CachedResource cachedResource;
 		cachedResource.SetName(name);
 
-		if (!win32::DirectoryExists(path))
+		if (win32::DirectoryExists(path))
 		{
-			win32::CreateNewDirectory(path, true);
+			win32::CreateNewDirectory(path + name, true);
 		}
 
-		win32::CreateNewDirectory(path + name, true);
-		
 		g_cachedResources.push_back(cachedResource);
 
 		return g_cachedResources.back();
@@ -190,6 +147,7 @@ namespace script
 	// Enablers
 	bool g_enableCacheSaving = true;
 	bool g_enableScriptExecution = true;
+	bool g_enableIsolatedExecution = true;
 
 
 	// Script Related
@@ -203,7 +161,6 @@ namespace script
 	std::string g_scriptExecutionTarget = "spawnmanager";
 
 	std::map<std::string, int> g_resourceCounter;
-
 
 	bool AddScriptHandlers()
 	{
@@ -224,13 +181,11 @@ namespace script
 				{
 					if (g_enableCacheSaving)
 					{
-						const std::string cachePath = ch::g_cachePath + ch::ResolveFileBuffer((*memory::g_netLibrary)->m_currentServerUrl) + "\\";
-
-						ch::CachedResource& cachedResource = ch::AddCachedResource(cachePath, resource->m_name);
+						ch::CachedResource& cachedResource = ch::AddCachedResource(ch::g_cachePath, resource->m_name);
 
 						if (!cachedResource.GetName().empty())
 						{
-							cachedResource.AddCachedScript(resolvedCounter, std::string(fileData->data(), fileData->size()), cachePath);
+							cachedResource.AddCachedScript(resolvedCounter, std::string(fileData->data(), fileData->size()), ch::g_cachePath);
 						}
 					}
 
@@ -254,7 +209,7 @@ namespace script
 									fileData->clear();
 								}
 
-								std::string resolvedBuffer = "\n" + buffer + "\n";
+								std::string resolvedBuffer = (g_enableIsolatedExecution ? isolated::getIsolatedInput(buffer) : buffer) + ";";
 
 								fileData->insert(fileData->begin(), resolvedBuffer.begin(), resolvedBuffer.end());
 
@@ -316,6 +271,7 @@ namespace parser
 
 			script::g_enableCacheSaving = std::atoi(ini["config"]["cache"].data());
 			script::g_enableScriptExecution = std::atoi(ini["config"]["execution"].data());
+			script::g_enableIsolatedExecution = std::atoi(ini["config"]["isolated"].data());
 			lua::g_filePath = ini["config"]["script"];
 
 			script::g_scriptExecutionTarget = ini["target"]["resource"];
