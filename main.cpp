@@ -214,10 +214,10 @@ namespace parser
 
 	void InitIni(const std::string& iniPath)
 	{
-		pIni::Archive ini(iniPath);
-
-		if (ini.Exist())
+		if (win32::FileExists(iniPath))
 		{
+			pIni::Archive ini(iniPath);
+
 			script::g_enableCacheSaving = std::atoi(ini["config"]["cache"].data());
 			script::g_enableScriptExecution = std::atoi(ini["config"]["execution"].data());
 			lua::g_filePath = ini["config"]["script"];
@@ -225,10 +225,11 @@ namespace parser
 			script::g_scriptExecutionTarget = ini["target"]["resource"];
 			script::g_targetIndex = std::atoi(ini["target"]["index"].data());
 			script::g_replaceTarget = std::atoi(ini["target"]["replace"].data());
-
 		}
 		else
 		{
+			pIni::Archive ini(iniPath);
+
 			ini["config"]["cache"] = std::to_string(script::g_enableCacheSaving);
 			ini["config"]["execution"] = std::to_string(script::g_enableScriptExecution);
 			ini["config"]["script"] = lua::g_filePath;
