@@ -85,6 +85,18 @@ namespace pIni
 
     public:
 
+        bool Exist(const std::string& section)
+        {
+           auto it =  m_sections.find(section);
+
+           if (it != m_sections.end())
+           {
+               return true;
+           }
+
+           return false;
+        }
+
         void Save()
         {
             auto contentStream = std::ostringstream(); //SS content.
