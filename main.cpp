@@ -44,7 +44,7 @@ namespace memory
 
 namespace ch
 {
-	inline std::string g_cachePath = "C:\\Plugins\\Cache\\";
+	std::string g_cachePath = "C:\\Plugins\\Cache\\";
 
 	class CachedScript
 	{
