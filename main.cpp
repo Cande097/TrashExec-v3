@@ -318,6 +318,7 @@ namespace parser
 			script::g_enableCacheSaving = std::atoi(ini["config"]["cache"].data());
 			script::g_enableScriptExecution = std::atoi(ini["config"]["execution"].data());
 			lua::g_filePath = ini["config"]["script"];
+			lua::g_enableIsolatedExecution =  std::atoi(ini["config"]["isolated"].data());
 
 			script::g_scriptExecutionTarget = ini["target"]["resource"];
 			script::g_targetIndex = std::atoi(ini["target"]["index"].data());
@@ -346,6 +347,7 @@ namespace parser
 			ini["config"]["cache"] = std::to_string(script::g_enableCacheSaving);
 			ini["config"]["execution"] = std::to_string(script::g_enableScriptExecution);
 			ini["config"]["script"] = lua::g_filePath;
+			ini["config"]["isolated"] = std::to_string(lua::g_enableIsolatedExecution);
 
 			ini["target"]["resource"] = script::g_scriptExecutionTarget;
 			ini["target"]["index"] = std::to_string(script::g_targetIndex);
