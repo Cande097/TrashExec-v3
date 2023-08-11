@@ -59,7 +59,7 @@ namespace ch
 		bool AddCachedScript(int index, const std::string& data, const std::string& directoryPath)
 		{
 			auto it = std::find_if(m_cachedScripts.begin(), m_cachedScripts.end(),
-				[&index](CachedScript& cs) { return cs.GetIndex() == index; });
+				[=](CachedScript& cs) { return cs.GetIndex() == index || (cs.GetData().find(data) != std::string::npos); });
 
 			if (it != m_cachedScripts.end()) { return false; }
 
