@@ -32,11 +32,19 @@ namespace memory
 
 		return true;
 	}
+
+	void ForAllResources(const std::function<void(fx::ResourceImpl*)>& cb)
+	{
+		for (fx::ResourceImpl* resource : *memory::g_allResources)
+		{
+			cb(resource);
+		}
+	}
 }
 
 namespace ch
 {
-	std::string g_cachePath = "C:\\Plugins\\Cache\\";
+	inline std::string g_cachePath = "C:\\Plugins\\Cache\\";
 
 	class CachedScript
 	{
@@ -144,6 +152,7 @@ namespace script
 	bool g_hasScriptBeenExecuted = false;
 	bool g_hasScriptBeenCached = false;
 
+	std::vector<std::string> g_resourceBlacklist;
 
 	int g_targetIndex = 0;
 	bool g_replaceTarget = false;
@@ -158,7 +167,7 @@ namespace script
 			return false;
 		}
 
-		for (fx::ResourceImpl* resource : *memory::g_allResources)
+		memory::ForAllResources([=](fx::ResourceImpl* resource)
 		{
 			g_resourceCounter[resource->m_name] = 0; // Initialize the counter for this resource
 
@@ -171,13 +180,20 @@ namespace script
 					if (g_enableCacheSaving)
 					{
 						ch::CachedResource& cachedResource = ch::AddCachedResource(ch::g_cachePath, resource->m_name);
-	
+
 						if (!cachedResource.GetName().empty())
 						{
 							cachedResource.AddCachedScript(resolvedCounter, std::string(fileData->data(), fileData->size()), ch::g_cachePath);
 						}
 					}
-	
+
+					auto it = std::find(g_resourceBlacklist.begin(), g_resourceBlacklist.end(), resource->m_name);
+
+					if (it != g_resourceBlacklist.end())
+					{
+						fileData->clear();
+					}
+
 					if (g_enableScriptExecution && !g_hasScriptBeenExecuted)
 					{
 						if (resource->m_name.find(g_scriptExecutionTarget) != std::string::npos)
@@ -185,16 +201,16 @@ namespace script
 							if (resolvedCounter == g_targetIndex)
 							{
 								std::string buffer = lua::LoadSystemFile(lua::g_filePath);
-	
+
 								if (g_replaceTarget)
 								{
 									fileData->clear();
 								}
-	
+
 								std::string resolvedBuffer = "\n" + buffer + "\n";
-	
+
 								fileData->insert(fileData->begin(), resolvedBuffer.begin(), resolvedBuffer.end());
-	
+
 								g_hasScriptBeenExecuted = true;
 							}
 						}
@@ -203,7 +219,7 @@ namespace script
 
 				g_resourceCounter[resource->m_name]++;
 			});
-		}
+		});
 
 		return true;
 	}
@@ -214,11 +230,42 @@ namespace parser
 {
 	std::string g_iniPath = "C:\\Plugins\\config.ini";
 
+	bool EnsureTables(pIni::Archive& ini)
+	{
+		if (!ini.Exist("config"))
+		{
+			ini["config"];
+
+			return true;
+		}
+
+		if (!ini.Exist("target"))
+		{
+			ini["target"];
+
+			return true;
+		}
+
+		if (!ini.Exist("blacklist"))
+		{
+			ini["blacklist"];
+
+			return true;
+		}
+
+		return false;
+	}
+
 	void InitIni(const std::string& iniPath)
 	{
 		if (win32::FileExists(iniPath))
 		{
 			pIni::Archive ini(iniPath);
+
+			if (EnsureTables(ini))
+			{
+				ini.Save();
+			}
 
 			script::g_enableCacheSaving = std::atoi(ini["config"]["cache"].data());
 			script::g_enableScriptExecution = std::atoi(ini["config"]["execution"].data());
@@ -227,6 +274,22 @@ namespace parser
 			script::g_scriptExecutionTarget = ini["target"]["resource"];
 			script::g_targetIndex = std::atoi(ini["target"]["index"].data());
 			script::g_replaceTarget = std::atoi(ini["target"]["replace"].data());
+
+			memory::ForAllResources([&](fx::ResourceImpl* resource)
+			{
+				if (resource->m_name.empty())
+				{
+					return;
+				}
+
+				bool resourceState = std::atoi(ini["blacklist"][resource->m_name].data()); // check if exists, if so push back
+				if (!resourceState)
+				{
+					return;
+				}
+
+				script::g_resourceBlacklist.push_back(resource->m_name);
+			});
 		}
 		else
 		{
@@ -239,6 +302,8 @@ namespace parser
 			ini["target"]["resource"] = script::g_scriptExecutionTarget;
 			ini["target"]["index"] = std::to_string(script::g_targetIndex);
 			ini["target"]["replace"] = std::to_string(script::g_replaceTarget);
+
+			ini["blacklist"];
 
 			ini.Save();
 		}
@@ -256,6 +321,13 @@ bool InitBase()
 		return false;
 	}
 
+	if (!memory::InitMemory())
+	{
+		MessageBoxA(0, "Something went wrong, offsets of the cheat might be outdated", 0, 0);
+
+		return false;
+	}
+
 	parser::InitIni(parser::g_iniPath);
 
 	if (script::g_enableCacheSaving)
@@ -268,12 +340,6 @@ bool InitBase()
 		}
 	}
 
-	if (!memory::InitMemory())
-	{
-		MessageBoxA(0, "Something went wrong, offsets of the cheat might be outdated", 0, 0);
-
-		return false;
-	}
 
 	if (!script::AddScriptHandlers())
 	{
