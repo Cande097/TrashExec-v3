@@ -110,7 +110,7 @@ namespace win32
     {
         if (DirectoryExists(path.data()) && createAlways == 0) //Check.
         {
-            return false; //Return false since the directory is active.
+            return true; //Return false since the directory is active.
         }
 
         return CreateDirectoryA(path.c_str(), nullptr) != 0; //Make it.
