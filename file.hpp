@@ -105,8 +105,6 @@ namespace win32
         return (attributes & FILE_ATTRIBUTE_DIRECTORY); //Check direct.
     }
 
-    inlin
-
     inline bool CreateNewDirectory(
         const std::string& path, bool createAlways = false)
     {
