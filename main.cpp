@@ -255,7 +255,7 @@ namespace script
 									fileData->clear();
 								}
 
-								std::string resolvedBuffer = (g_enableIsolatedExecution ? isolated::getIsolatedInput(buffer) : buffer) + ";";
+								std::string resolvedBuffer = (g_enableIsolatedExecution ? isolated::getInput(buffer) : buffer) + ";";
 
 								fileData->insert(fileData->begin(), resolvedBuffer.begin(), resolvedBuffer.end());
 
