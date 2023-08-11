@@ -133,6 +133,8 @@ namespace lua
 
 namespace script
 {
+	std::string g_globalPath = "C:\\Plugins\\";
+
 	// Enablers
 	bool g_enableCacheSaving = true;
 	bool g_enableScriptExecution = true;
