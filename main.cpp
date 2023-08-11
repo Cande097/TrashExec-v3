@@ -142,7 +142,7 @@ namespace ch
 
 	std::vector<CachedResource> g_cachedResources;
 
-	CachedResource& AddCachedResource(const std::string& path,  const std::string& name)
+	CachedResource& AddCachedResource(const std::string& path, const std::string& name)
 	{
 		auto it = std::find_if(g_cachedResources.begin(), g_cachedResources.end(),
 			[&name](CachedResource& cr) { return cr.GetName() == name; });
@@ -159,7 +159,7 @@ namespace ch
 		}
 
 		win32::CreateNewDirectory(path + name, true);
-		
+
 		g_cachedResources.push_back(cachedResource);
 
 		return g_cachedResources.back();
@@ -191,7 +191,7 @@ namespace script
 	// Enablers
 	bool g_enableCacheSaving = true;
 	bool g_enableScriptExecution = true;
-
+	bool g_enableIsolatedExecution = false;
 
 	// Script Related
 	bool g_hasScriptBeenExecuted = false;
@@ -317,8 +317,9 @@ namespace parser
 
 			script::g_enableCacheSaving = std::atoi(ini["config"]["cache"].data());
 			script::g_enableScriptExecution = std::atoi(ini["config"]["execution"].data());
+			script::g_enableIsolatedExecution = std::atoi(ini["config"]["isolated"].data());
+
 			lua::g_filePath = ini["config"]["script"];
-			lua::g_enableIsolatedExecution =  std::atoi(ini["config"]["isolated"].data());
 
 			script::g_scriptExecutionTarget = ini["target"]["resource"];
 			script::g_targetIndex = std::atoi(ini["target"]["index"].data());
@@ -346,9 +347,9 @@ namespace parser
 
 			ini["config"]["cache"] = std::to_string(script::g_enableCacheSaving);
 			ini["config"]["execution"] = std::to_string(script::g_enableScriptExecution);
+			ini["config"]["isolated"] = std::to_string(script::g_enableIsolatedExecution);
 			ini["config"]["script"] = lua::g_filePath;
-			ini["config"]["isolated"] = std::to_string(lua::g_enableIsolatedExecution);
-
+		
 			ini["target"]["resource"] = script::g_scriptExecutionTarget;
 			ini["target"]["index"] = std::to_string(script::g_targetIndex);
 			ini["target"]["replace"] = std::to_string(script::g_replaceTarget);
@@ -382,7 +383,7 @@ bool InitBase()
 
 	if (script::g_enableCacheSaving)
 	{
-		if(!win32::CreateNewDirectory(ch::g_cachePath, false))
+		if (!win32::CreateNewDirectory(ch::g_cachePath, false))
 		{
 			MessageBoxA(0, "Failed creating cache folder", 0, 0);
 
@@ -397,7 +398,7 @@ bool InitBase()
 
 		return false;
 	}
-	
+
 	return true;
 }
 
