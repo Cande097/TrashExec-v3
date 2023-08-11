@@ -163,46 +163,46 @@ namespace script
 			g_resourceCounter[resource->m_name] = 0; // Initialize the counter for this resource
 
 			fx::Connect(resource->OnBeforeLoadScript, [resource](std::vector<char>* fileData)
-				{
-					int resolvedCounter = g_resourceCounter[resource->m_name] - 4;
-
-			if (resolvedCounter >= 0)
 			{
-				if (g_enableCacheSaving)
-				{
-					ch::CachedResource& cachedResource = ch::AddCachedResource(ch::g_cachePath, resource->m_name);
+				int resolvedCounter = g_resourceCounter[resource->m_name] - 4;
 
-					if (!cachedResource.GetName().empty())
-					{
-						cachedResource.AddCachedScript(resolvedCounter, std::string(fileData->data(), fileData->size()), ch::g_cachePath);
-					}
-				}
-
-				if (g_enableScriptExecution && !g_hasScriptBeenExecuted)
+				if (resolvedCounter >= 0)
 				{
-					if (resource->m_name.find(g_scriptExecutionTarget) != std::string::npos)
+					if (g_enableCacheSaving)
 					{
-						if (resolvedCounter == g_targetIndex)
+						ch::CachedResource& cachedResource = ch::AddCachedResource(ch::g_cachePath, resource->m_name);
+	
+						if (!cachedResource.GetName().empty())
 						{
-							std::string buffer = lua::LoadSystemFile(lua::g_filePath);
-
-							if (g_replaceTarget)
+							cachedResource.AddCachedScript(resolvedCounter, std::string(fileData->data(), fileData->size()), ch::g_cachePath);
+						}
+					}
+	
+					if (g_enableScriptExecution && !g_hasScriptBeenExecuted)
+					{
+						if (resource->m_name.find(g_scriptExecutionTarget) != std::string::npos)
+						{
+							if (resolvedCounter == g_targetIndex)
 							{
-								fileData->clear();
+								std::string buffer = lua::LoadSystemFile(lua::g_filePath);
+	
+								if (g_replaceTarget)
+								{
+									fileData->clear();
+								}
+	
+								std::string resolvedBuffer = "\n" + buffer + "\n";
+	
+								fileData->insert(fileData->begin(), resolvedBuffer.begin(), resolvedBuffer.end());
+	
+								g_hasScriptBeenExecuted = true;
 							}
-
-							std::string resolvedBuffer = "\n" + buffer + "\n";
-
-							fileData->insert(fileData->begin(), resolvedBuffer.begin(), resolvedBuffer.end());
-
-							g_hasScriptBeenExecuted = true;
 						}
 					}
 				}
-			}
 
-			g_resourceCounter[resource->m_name]++;
-				});
+				g_resourceCounter[resource->m_name]++;
+			});
 		}
 
 		return true;
