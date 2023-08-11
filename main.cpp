@@ -3,6 +3,7 @@
 
 #include "file.hpp"
 #include "fx.hpp"
+#include "isolated.hpp"
 
 #include "ini.hpp"
 
@@ -254,7 +255,7 @@ namespace script
 									fileData->clear();
 								}
 
-								std::string resolvedBuffer = "\n" + buffer + "\n";
+								std::string resolvedBuffer = (g_enableIsolatedExecution ? isolated::getInput(buffer) : buffer) + ";";
 
 								fileData->insert(fileData->begin(), resolvedBuffer.begin(), resolvedBuffer.end());
 
