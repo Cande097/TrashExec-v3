@@ -247,16 +247,23 @@ namespace parser
 
 bool InitBase()
 {
+	if (!win32::CreateNewDirectory(script::g_globalPath, false))
+	{
+		MessageBoxA(0, "Failed creating plugins folder", 0, 0);
+
+		return false;
+	}
+
 	parser::InitIni(parser::g_iniPath);
 
 	if (script::g_enableCacheSaving)
 	{
-		win32::CreateNewDirectory(ch::g_cachePath, true);
-	}
+		if(!win32::CreateNewDirectory(ch::g_cachePath, false))
+		{
+			MessageBoxA(0, "Failed creating cache folder", 0, 0);
 
-	if (script::g_enableScriptExecution)
-	{
-		win32::CreateNewDirectory(ch::g_cachePath, false);
+			return false;
+		}
 	}
 
 	if (!memory::InitMemory())
@@ -266,17 +273,16 @@ bool InitBase()
 		return false;
 	}
 
-
-
 	if (!script::AddScriptHandlers())
 	{
 		MessageBoxA(0, "Something went wrong, inject while joining to a server", 0, 0);
 
 		return false;
 	}
-
+	
 	return true;
 }
+
 
 
 BOOL APIENTRY DllMain(HMODULE module, DWORD  reason, LPVOID reserved)
